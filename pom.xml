@@ -81,6 +81,7 @@
 		<module>chapter-5-spring-boot-paging-sorting</module>
 
 		<module>springboot-hbase</module>
+		<module>chapter-6-spring-boot-cache-redis</module>
 	</modules>
 
 </project>
