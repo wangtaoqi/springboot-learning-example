@@ -1,8 +1,13 @@
 package org.spring.springboot.service.impl;
 
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.FieldValueFactorFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
+import org.elasticsearch.index.query.functionscore.WeightBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spring.springboot.domain.City;
@@ -87,13 +92,30 @@ public class CityESServiceImpl implements CityService {
         //   - 短语匹配 https://www.elastic.co/guide/cn/elasticsearch/guide/current/phrase-matching.html
         //   - 字段对应权重分设置，可以优化成 enum
         //   - 由于无相关性的分值默认为 1 ，设置权重分最小值为 10
+        /*
         FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery()
                 .add(QueryBuilders.matchPhraseQuery("name", searchContent),
                 ScoreFunctionBuilders.weightFactorFunction(1000))
                 .add(QueryBuilders.matchPhraseQuery("description", searchContent),
                 ScoreFunctionBuilders.weightFactorFunction(500))
                 .scoreMode(SCORE_MODE_SUM).setMinScore(MIN_SCORE);
+            */
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        List<QueryBuilder> should = boolQueryBuilder.should();
+        should.add(QueryBuilders.matchPhraseQuery("name", searchContent));
+        should.add(QueryBuilders.matchPhraseQuery("description", searchContent));
+        ScoreFunctionBuilder<WeightBuilder> nameWeigth = new WeightBuilder();
+        nameWeigth.setWeight(1000);
+        ScoreFunctionBuilder<FieldValueFactorFunctionBuilder> descriptionWeigth = new FieldValueFactorFunctionBuilder("description");
+        descriptionWeigth.setWeight(500);
+        FunctionScoreQueryBuilder.FilterFunctionBuilder[] filterFunctionBuilders = new FunctionScoreQueryBuilder.FilterFunctionBuilder[2];
+        filterFunctionBuilders[0]=new FunctionScoreQueryBuilder.FilterFunctionBuilder(boolQueryBuilder, nameWeigth);
+        filterFunctionBuilders[1]=new FunctionScoreQueryBuilder.FilterFunctionBuilder(boolQueryBuilder, descriptionWeigth);
+        FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(boolQueryBuilder,filterFunctionBuilders);
 
+                       // ScoreFunctionBuilders.weightFactorFunction(1000))
+             //           ScoreFunctionBuilders.weightFactorFunction(500))
+           //     .scoreMode(SCORE_MODE_SUM).setMinScore(MIN_SCORE);
         // 分页参数
         Pageable pageable = new PageRequest(pageNumber, pageSize);
         return new NativeSearchQueryBuilder()

@@ -8,17 +8,21 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 import spring.boot.core.domain.User;
 import spring.boot.core.service.UserService;
 
 import javax.validation.Valid;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 用户控制层
  *
  * Created by bysocket on 24/07/2017.
  */
-@Controller
+//@Controller
+@RestController
 @RequestMapping(value = "/users")     // 通过这里配置使下面的映射都在 /users
 public class UserController {
 
@@ -35,7 +39,10 @@ public class UserController {
         map.addAttribute("userList", userService.findAll());
         return "userList";
     }
-
+    @RequestMapping(value = "/list",method = RequestMethod.GET)
+    public Map getUserList() {
+        return new HashMap();
+    }
     /**
      * 显示创建用户表单
      *
